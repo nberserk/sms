@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+    <PreferenceCategory android:title="Account">
+        <EditTextPreference android:summary="sender" android:key="@string/sender" android:title="sender" android:inputType="phone" />
+        <EditTextPreference android:summary="forward" android:key="@string/forward_phone_number" android:title="forward" android:inputType="phone" />
+    </PreferenceCategory>
+    
+
+</PreferenceScreen>

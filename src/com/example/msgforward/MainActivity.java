@@ -2,9 +2,7 @@ package com.example.msgforward;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -19,7 +17,6 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.telephony.SmsManager;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -35,7 +32,7 @@ public class MainActivity extends Activity {
 	TextView mTextHistory;
 	BroadcastReceiver mRecevierSmsSent;
 	private String FILE_LOG = "history.txt";
-	private final int MAX_HISTORY = 100;
+	private final int MAX_HISTORY = 100000;
 	private int mSentIndex;
 
 	@Override
@@ -43,14 +40,14 @@ public class MainActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		
-		// cache
 		mTextHistory = (TextView) findViewById(R.id.editTextHistory);
-		Button btn = (Button)findViewById(R.id.buttonTest);
-		btn.setOnClickListener(new OnClickListener() {
+		Button btnTest = (Button)findViewById(R.id.buttonTest);
+		btnTest.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View arg0) {
-				Log.d(sTag, "test clicked");
-				forwardMsg("15776200", "test msg from darren");
+				String testMsg = "test msg from darren " + mSentIndex + "\n";
+				mSentIndex++;
+				forwardMsg("15776200", testMsg);
 			}
 		});
 
@@ -75,11 +72,10 @@ public class MainActivity extends Activity {
 	}
 	
 	private void loadHistory() {
-		FileInputStream fis = null;
+		BufferedReader reader = null;
 		try {
-			fis = openFileInput(FILE_LOG);
-			BufferedReader reader = new BufferedReader(new InputStreamReader(
-					fis));
+			reader = new BufferedReader(new InputStreamReader(
+					openFileInput(FILE_LOG)));
 			String line;
 			StringBuffer buffer = new StringBuffer();
 
@@ -94,8 +90,8 @@ public class MainActivity extends Activity {
 			e.printStackTrace();
 		}finally{
 			try {
-				if (fis != null) {
-					fis.close();
+				if (reader != null) {
+					reader.close();
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -104,11 +100,10 @@ public class MainActivity extends Activity {
 	}
 
 	private void saveHistory() {
-		FileOutputStream fos = null;
+		BufferedWriter writer = null;
 		try {
-			fos = openFileOutput(FILE_LOG, Context.MODE_PRIVATE);
-			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
-					fos));
+			writer = new BufferedWriter(new OutputStreamWriter(openFileOutput(
+					FILE_LOG, Context.MODE_PRIVATE)));
 			CharSequence raw = mTextHistory.getText();
 
 			if (raw.length() > MAX_HISTORY) {
@@ -121,12 +116,12 @@ public class MainActivity extends Activity {
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
-			try {
-				if (fos != null) {
-					fos.close();
+			if (writer != null) {
+				try {
+					writer.close();
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
-			} catch (IOException e) {
-				e.printStackTrace();
 			}
 		}
 	}
@@ -140,10 +135,8 @@ public class MainActivity extends Activity {
 		String toNumber = sharedPref.getString(
 				getString(R.string.forward_phone_number), "");
 
-
 		if (from.equals(wantedFromNumber)) {
-			String log = "sending: " + msg + mSentIndex;
-			mSentIndex++;
+			String log = "sending: " + msg;
 			mTextHistory.append(log);
 
 			PendingIntent sentPI = PendingIntent.getBroadcast(this, 0,

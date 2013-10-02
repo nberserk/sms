@@ -1,5 +1,14 @@
 package com.example.msgforward;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -24,6 +33,9 @@ public class MainActivity extends Activity {
 	public final static String SMS_SENT = "SMS_SENT";
 
 	TextView mTextHistory;
+	private String FILE_LOG = "history.txt";
+	private final int MAX_HISTORY = 100;
+	private int mSentIndex;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -36,65 +48,86 @@ public class MainActivity extends Activity {
 		btn.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View arg0) {
-				
 				Log.d(sTag, "test clicked");
-
-				forwardMsg("15776200", "test");
-
+				forwardMsg("15776200", "test msg from darren");
 			}
 		});
 
 		checkIntentNforwardMsg(getIntent());
-
-		// mTextTo = (TextView) findViewById(R.id.editTextTo);
-		//
-		// SharedPreferences pref = getSharedPreferences(PREF_NAME,
-		// Context.MODE_PRIVATE);
-		//
-		// String from = pref.getString("from", "");
-		// String to = pref.getString("to", "");
-		// Log.d(sTag, "perfs:" + from + "," + to);
-		//
-		// if (from.length() != 0) {
-		// mTextFrom.setText(from);
-		// }
-		// if (to.length() != 0) {
-		// mTextTo.setText(to);
-		// }
-		//
-		// if (address.equals(from)) {
-		// Log.d(MainActivity.sTag, "HCard msg arrived");
-		// }
-		//
-		// if (to.length()>0) {
-		// String body = getIntent().getStringExtra("body");
-		// if (body != null) {
-		// String sender = getIntent().getStringExtra("from");
-		//
-		// if (sender.equals(from)) {
-
-		//
-		// }else{
-		// Toast.makeText(context, "", duration);
-		// }
-		// }
-		// }
-		
 		registerReceiver(new BroadcastReceiver(){
 			@Override
 			public void onReceive(Context arg0, Intent arg1) {
 				switch (getResultCode()) {
 				case Activity.RESULT_OK:
-					mTextHistory.append("-> OK \n");
+					mTextHistory.append("-> OK\n");
 					break;
 				default:
-					mTextHistory.append("-> Failed \n");
+					mTextHistory.append("-> Failed\n");
 					break;
 				}
 			}
 		}, new IntentFilter(SMS_SENT));
+
+		loadHistory();
 	}
 	
+	private void loadHistory() {
+		FileInputStream fis = null;
+		try {
+			fis = openFileInput(FILE_LOG);
+			BufferedReader reader = new BufferedReader(new InputStreamReader(
+					fis));
+			String line;
+			StringBuffer buffer = new StringBuffer();
+
+		    while ((line = reader.readLine()) != null) {
+				buffer.append(line);
+			}
+			line = buffer.toString();
+			mTextHistory.setText(line);
+		} catch (FileNotFoundException e) {
+			// no log file
+		} catch (IOException e) {
+			e.printStackTrace();
+		}finally{
+			try {
+				if (fis != null) {
+					fis.close();
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	private void saveHistory() {
+		FileOutputStream fos = null;
+		try {
+			fos = openFileOutput(FILE_LOG, Context.MODE_PRIVATE);
+			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
+					fos));
+			CharSequence raw = mTextHistory.getText();
+
+			if (raw.length() > MAX_HISTORY) {
+				int delta = raw.length() - MAX_HISTORY;
+				raw = raw.subSequence(delta, raw.length());
+			}
+			writer.write(raw.toString());
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (fos != null) {
+					fos.close();
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
 	private void forwardMsg(String from, String msg) {
 		// get preferences
 		SharedPreferences sharedPref = PreferenceManager
@@ -104,8 +137,10 @@ public class MainActivity extends Activity {
 		String toNumber = sharedPref.getString(
 				getString(R.string.forward_phone_number), "");
 
+
 		if (from.equals(wantedFromNumber)) {
-			String log = "sending: " + msg;
+			String log = "sending: " + msg + mSentIndex;
+			mSentIndex++;
 			mTextHistory.append(log);
 
 			PendingIntent sentPI = PendingIntent.getBroadcast(this, 0,
@@ -132,6 +167,12 @@ public class MainActivity extends Activity {
 		super.onNewIntent(intent);
 
 		checkIntentNforwardMsg(intent);
+	}
+
+	@Override
+	protected void onDestroy() {
+		saveHistory();
+		super.onDestroy();
 	}
 
 	@Override

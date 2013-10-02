@@ -33,6 +33,7 @@ public class MainActivity extends Activity {
 	public final static String SMS_SENT = "SMS_SENT";
 
 	TextView mTextHistory;
+	BroadcastReceiver mRecevierSmsSent;
 	private String FILE_LOG = "history.txt";
 	private final int MAX_HISTORY = 100;
 	private int mSentIndex;
@@ -54,7 +55,8 @@ public class MainActivity extends Activity {
 		});
 
 		checkIntentNforwardMsg(getIntent());
-		registerReceiver(new BroadcastReceiver(){
+
+		mRecevierSmsSent = new BroadcastReceiver() {
 			@Override
 			public void onReceive(Context arg0, Intent arg1) {
 				switch (getResultCode()) {
@@ -66,7 +68,8 @@ public class MainActivity extends Activity {
 					break;
 				}
 			}
-		}, new IntentFilter(SMS_SENT));
+		};
+		registerReceiver(mRecevierSmsSent, new IntentFilter(SMS_SENT));
 
 		loadHistory();
 	}
@@ -171,8 +174,10 @@ public class MainActivity extends Activity {
 
 	@Override
 	protected void onDestroy() {
-		saveHistory();
 		super.onDestroy();
+
+		saveHistory();
+		unregisterReceiver(mRecevierSmsSent);
 	}
 
 	@Override

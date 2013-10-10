@@ -17,6 +17,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.telephony.SmsManager;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -84,6 +85,7 @@ public class MainActivity extends Activity {
 			}
 			line = buffer.toString();
 			mTextHistory.setText(line);
+			Log.i(sTag, "loadHistory called");
 		} catch (FileNotFoundException e) {
 			// no log file
 		} catch (IOException e) {
@@ -111,16 +113,18 @@ public class MainActivity extends Activity {
 				raw = raw.subSequence(delta, raw.length());
 			}
 			writer.write(raw.toString());
+			Log.i(sTag, "saveHistory called");
+
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+			Log.e(sTag, e.toString());
 		} catch (IOException e) {
-			e.printStackTrace();
+			Log.e(sTag, e.toString());
 		} finally {
 			if (writer != null) {
 				try {
 					writer.close();
 				} catch (IOException e) {
-					e.printStackTrace();
+					Log.e(sTag, e.toString());
 				}
 			}
 		}

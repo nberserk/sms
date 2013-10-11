@@ -52,7 +52,7 @@ public class MainActivity extends Activity {
 			}
 		});
 
-		checkIntentNforwardMsg(getIntent());
+		
 
 		mRecevierSmsSent = new BroadcastReceiver() {
 			@Override
@@ -70,6 +70,7 @@ public class MainActivity extends Activity {
 		registerReceiver(mRecevierSmsSent, new IntentFilter(SMS_SENT));
 
 		loadHistory();
+		checkIntentNforwardMsg(getIntent());
 	}
 	
 	private void loadHistory() {
